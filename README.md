@@ -2,12 +2,8 @@
 
 This service helps to abstracts away multiple flows for accquiering Onedata API tokens.
 
-To build:
+To build: `make container`
 
-`make container `
+To run: `docker-compose up`
 
-To run:
-
-```
-docker-compose up
-```
+To publish: `make push`
