@@ -1,0 +1,10 @@
+idps:
+  onepanel: 
+    url: https://luma-onezone.luma.svc.dev.onedata.uk.to
+    type: onepanel
+  keycloak-rhea:
+    name: reha
+    onezoneUrl: https://luma-onezone.luma.svc.dev.onedata.uk.to
+    url: http://luma-keycloak.luma.svc.dev.onedata.uk.to
+    tokenPrefix: rhea
+    type: keycloak

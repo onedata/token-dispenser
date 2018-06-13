@@ -1,0 +1,9 @@
+version: '2.0'
+
+services:
+  token-dispenser:
+    image: onedata/token-dispenser
+    volumes:
+        - "${PWD}/db.yaml:/db.yaml"
+    ports:
+      - "8080:80"
