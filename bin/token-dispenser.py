@@ -108,7 +108,7 @@ def get_userInfo(idp):
       token = getKeycloakToken(username,password,idps[idp]['url'])
       userinfo = getKeycloakUserInfo(token,idps[idp]['url'])
       userinfo = {
-        'userId': hashlib.md5("{}:{}".format(idps[idp]['tokenPrefix'],userinfo['sub']).encode()).hexdigest(),
+        'userId': hashlib.md5("{}:{}".format(idps[idp]['name'],userinfo['sub']).encode()).hexdigest(),
         'name': userinfo['name'],
         'login': userinfo['preferred_username'],
         'linkedAccounts': [],
