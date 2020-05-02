@@ -17,7 +17,7 @@ def getOnezoneTokenWithBAsicAuth(username,password,url):
   response=requests.post("{}/{}".format(url,"api/v3/onezone/user/client_tokens"), auth=(username, password), verify=False)
   response.raise_for_status()
   return json.loads(response.content)["token"]
-  
+
 # Get Onezone API token with auth token
 def getOnezoneTokenWithToken(token,url):
   response=requests.post("{}/{}".format(url,"api/v3/onezone/user/client_tokens"),
@@ -25,7 +25,7 @@ def getOnezoneTokenWithToken(token,url):
       "X-Auth-Token": "{}".format(token)
     },
     verify=False,
-    )
+  )
   response.raise_for_status()
   return json.loads(response.content)["token"]
 
@@ -42,11 +42,11 @@ def getKeycloakToken(username,password,url):
       "client_id": "admin-cli"
     },
     verify=False,
-    )
+  )
   return json.loads(response.content)["access_token"]
 
 @app.route('/api/v1.0/token/<idp>', methods=['GET'])
-def get_token(idp):
+def get_token(idp,username=None,password=None):
   username=request.authorization["username"]
   password=request.authorization["password"]
   idp_type=idps[idp]["type"]
@@ -59,8 +59,7 @@ def get_token(idp):
   except requests.exceptions.HTTPError as err:
       return "{}".format(err)
   return "{}".format(token)
-  
-  
+
 # Get Keycloak user info
 def getKeycloakUserInfo(token,url):
   response=requests.get("{}/{}".format(url,"auth/realms/onedata/protocol/openid-connect/userinfo"),
@@ -69,7 +68,7 @@ def getKeycloakUserInfo(token,url):
       "Authorization": "{} {}".format("Bearer",token)
     },
     verify=False,
-    )
+  )   
   response.raise_for_status()
   return json.loads(response.content)
 
@@ -87,7 +86,6 @@ def get_uid(idp):
   try:
     if idp_type == "onepanel":
       uid = getOnezoneUserInfo(username,password,idps[idp]['url'])['userId']
-      print(uid)
     elif idp_type == "keycloak":
       token = getKeycloakToken(username,password,idps[idp]['url'])
       keycloakUid = getKeycloakUserInfo(token,idps[idp]['url'])['sub']
@@ -95,7 +93,44 @@ def get_uid(idp):
   except requests.exceptions.HTTPError as err:
       return "{}".format(err)
   return uid
-  
+
+@app.route('/api/v2.0/onezone/uid/<idp>', methods=['GET'])
+def get_uid_v19(idp):
+  username=request.authorization["username"]
+  password=request.authorization["password"]
+  idp_type=idps[idp]["type"]
+  try:
+    if idp_type == "onepanel":
+      uid = getOnezoneUserInfo(username,password,idps[idp]['url'])['userId']
+    elif idp_type == "keycloak":
+      token = getKeycloakToken(username,password,idps[idp]['url'])
+      keycloakUid = getKeycloakUserInfo(token,idps[idp]['url'])['sub']
+      uid = getUserIdBasedOnIdP(token,keycloakUid,idp)
+  except requests.exceptions.HTTPError as err:
+      return "{}".format(err)
+  return uid
+
+# Get user id from Onezone based on particular IdP
+def getUserIdBasedOnIdP(token,keycloakUid,idp):
+  try:
+    print(idps[idp]["name"])
+    response=requests.post("{}/{}".format(idps[idp]['onezoneUrl'],"api/v3/onezone/provider/public/map_idp_user"),
+      headers={
+        "Content-Type": "application/json"
+      },
+      data=json.dumps({
+        "idp": idps[idp]["name"],
+        "userId": keycloakUid
+      }),
+      verify=False
+    )
+    response.raise_for_status()
+    userId=json.loads(response.content)['userId']
+  except requests.exceptions.HTTPError as err:
+      return "{}".format(err)
+  return "{}".format(userId)
+
+
 @app.route('/api/v1.0/user/info/<idp>', methods=['GET'])
 def get_userInfo(idp):
   username=request.authorization["username"]
@@ -121,6 +156,3 @@ def get_userInfo(idp):
 if __name__ == '__main__':
     idps = yaml.load(open(sys.argv[1], "r"))["idps"]
     app.run(host='0.0.0.0', port=sys.argv[2],debug=False)
-    
-    
-    
